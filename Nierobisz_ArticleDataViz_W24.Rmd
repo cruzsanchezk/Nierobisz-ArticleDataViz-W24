@@ -1,0 +1,74 @@
+```
+title: "Nierobisz_ArticleDataViz_W24"
+author: Rachel Kim
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+```
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+library(ggplot2)
+library(broom)
+library(GGally)
+library(dplyr)
+library(readxl)
+library(tidyverse)
+```
+
+```{r}
+# import dataset 
+data <- read_excel("Nierobisz_dataset.xlsx")
+head(data)
+```
+
+```{r}
+# barplot for different categories of job stability of those who were reemployed after interview
+
+# identify column containing string to clean (some have the following question asked attached to it)
+column_to_clean <- data$`Q1-newjob-yes2`
+
+# using grep() to find rows containing unwanted string - assisted by CHATGPT
+rows_to_clean <- grep(",Please feel welcome to explain your answer:", column_to_clean)
+
+# using gsub(), replaces the string we don't want with "" in specified rows - assisted by CHATGPT
+column_to_clean[rows_to_clean] <- gsub(",Please feel welcome to explain your answer:", "", column_to_clean[rows_to_clean])
+
+data$`Q1-newjob-yes2`<- column_to_clean
+
+```
+```{r}
+# want to focus on those who were able to find employment after interview
+rows_to_plot <- which(!is.na(data$`Q1-newjob-yes2`))
+# exclude first row that contains the question
+rows_to_plot[-1]
+
+# finding counts of each category
+count1 <- sum(data$`Q1-newjob-yes2` == "1 or 2 jobs", na.rm = TRUE)
+count2 <- sum(data$`Q1-newjob-yes2` == "3 or 4 jobs", na.rm = TRUE)
+count3 <- sum(data$`Q1-newjob-yes2` == "5 or more jobs", na.rm = TRUE)
+
+# checking that everything's running smoothly
+count1
+count2
+count3
+```
+
+```{r}
+# using ggplot2 to make bar plot
+# create new data frame
+bar1data <- data.frame(Newjobs = c("1 or 2 jobs","3 or 4 jobs", "5 or more jobs"), Counts = c(count1,count2,count3))
+
+# bar plot
+ggplot(bar1data, aes(x = Newjobs, y = Counts)) +
+  geom_bar(stat = "identity") + 
+  labs(title = "Number of jobs held by individuals that found employment after initial interview", x = "Number of jobs held", y = "Count of individuals")
+```
+
+```{r}
+# maybe make pie chart for yes and no for finding employment
+# another bar chart for specific labor market challenges faced
+# gropued bar plot for comparing satisfaction levels of soft landing vs financial hardship after job loss
+```
+
+
