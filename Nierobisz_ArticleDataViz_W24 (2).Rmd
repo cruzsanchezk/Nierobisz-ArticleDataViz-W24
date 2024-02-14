@@ -1,0 +1,241 @@
+```
+title: "Nierobisz_ArticleDataViz_W24"
+author: Rachel Kim
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+```
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+library(ggplot2)
+library(broom)
+library(GGally)
+library(dplyr)
+library(readxl)
+library(tidyverse)
+```
+
+```{r}
+# import dataset 
+annette_initaldata <- read_excel("Nierobisz_dataset.xlsx")
+head(annette_initaldata)
+
+annette_numericaldata <- read_excel("/Accounts/kimr2/stat_230/Nierobisznumdata.xlsx")
+head(annette_numericaldata)
+
+#file_name <- "Nierobisznumdata.xlsx"
+#relative_path <- ""
+
+#absolute_path <- normalizePath(file.path(relative_path, file_name))
+
+#print(absolute_path)
+
+```
+
+```{r}
+# barplot for different categories of job stability of those who were reemployed after interview
+
+# identify column containing string to clean (some have the following question asked attached to it)
+column_to_clean <- annette_initaldata$`Q1-newjob-yes2`
+
+# using grep() to find rows containing unwanted string - assisted by CHATGPT
+rows_to_clean <- grep(",Please feel welcome to explain your answer:", column_to_clean)
+
+# using gsub(), replaces the string we don't want with "" in specified rows - assisted by CHATGPT
+column_to_clean[rows_to_clean] <- gsub(",Please feel welcome to explain your answer:", "", column_to_clean[rows_to_clean])
+
+annette_initaldata$`Q1-newjob-yes2`<- column_to_clean
+
+```
+
+
+```{r}
+# want to focus on those who were able to find employment after interview
+rows_to_plot <- which(!is.na(annette_initaldata$`Q1-newjob-yes2`))
+# exclude first row that contains the question
+rows_to_plot[-1]
+
+# finding counts of each category
+count1 <- sum(annette_initaldata$`Q1-newjob-yes2` == "1 or 2 jobs", na.rm = TRUE)
+count2 <- sum(annette_initaldata$`Q1-newjob-yes2` == "3 or 4 jobs", na.rm = TRUE)
+count3 <- sum(annette_initaldata$`Q1-newjob-yes2` == "5 or more jobs", na.rm = TRUE)
+
+# checking that everything's running smoothly
+count1
+count2
+count3
+```
+
+```{r}
+# using ggplot2 to make bar plot
+# create new data frame
+bar1data <- data.frame(Newjobs = c("1 or 2 jobs","3 or 4 jobs", "5 or more jobs"), Counts = c(count1,count2,count3))
+
+# bar plot
+ggplot(bar1data, aes(x = Newjobs, y = Counts)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "blue") + 
+  labs(title = "Number of jobs held by individuals that found employment", x = "Number of jobs held", y = "Count of individuals")
+```
+
+```{r}
+# maybe make pie chart for yes and no for finding employment
+# another bar chart for specific labor market challenges faced
+# side by side pie charts for who retired in soft landing vs financial hardship
+# plot for comparing differences in current salaries?
+# side by side bar plot for comparing satisfaction levels of soft landing vs financial hardship after job loss
+# side by side grouped plot for men vs women response
+```
+
+```{r}
+# Make a pie chart - show differences in ratios of retirement for soft landing vs downward mobility individuals
+# import numerical data set
+
+# start off with pie chart for retirement - responses of "yes" or "no" for soft landing
+# filter out rows of individuals that had soft landing
+
+names_softlanding <- c("Isaac", "Felix", "Tad", "Kai", "Dylan", "Carl", "Henry", "Marie")
+rows_softlanding <- annette_numericaldata %>% filter(RecipientFirstName %in% names_softlanding)
+
+countofyes_soft <- sum(rows_softlanding$`Q6-employed` == "2.0", na.rm = TRUE)
+countofno_soft <- sum(rows_softlanding$`Q6-employed` == "1.0", na.rm = TRUE)
+
+# create data to be used for pie chart
+data_forsoft_pie <- data.frame(Response = c("Employed", "Retired"), value = c(countofyes_soft, countofno_soft))
+
+# basic pie chart
+piesoft <- ggplot(data_forsoft_pie, aes(x = "", y = value, fill = Response)) + geom_bar(stat = "identity", width = 1, color = "white") + scale_fill_manual(values = c("Employed" = "green", "Retired" = "lightblue"))+
+  coord_polar("y", start = 0) + theme_void() + labs(title = "Current employment status\nof soft-landing respondents") + theme(plot.title = element_text(hjust = 0.5))
+piesoft
+```
+
+```{r}
+# do the same for downward-mobility individuals (everyone else)
+# filter out rows of everyone excluding soft landing people
+rows_downward <- annette_numericaldata %>% filter(!RecipientFirstName %in% names_softlanding)
+
+countofyes_down <- sum(rows_downward$`Q6-employed` == "2.0", na.rm = TRUE)
+countofno_down <- sum(rows_downward$`Q6-employed` == "1.0", na.rm = TRUE)
+
+# create data to be used for pie chart
+data_fordown_pie <- data.frame(Response = c("Employed", "Retired"), value = c(countofyes_down, countofno_down))
+
+# basic pie chart
+piedown <- ggplot(data_fordown_pie, aes(x = "", y = value, fill = Response)) + geom_bar(stat = "identity", width = 1, color = "white") + scale_fill_manual(values = c("Employed" = "green", "Retired" = "lightblue"))+
+  coord_polar("y", start = 0) + theme_void() + labs(title = "Current employment status\nof downward-mobility respondents") + theme(plot.title = element_text(hjust = 0.5))
+
+piedown
+
+```
+```{r}
+# side-by-side for comparison
+library(patchwork)
+
+sidebyside_plots <- piesoft + piedown 
+sidebyside_plots
+```
+
+```{r}
+# bar plots for indicated level of satisfaction in life - show differences between 
+# multiple bars - starting off with plot for soft landing group - separated groups of men and women
+# using string data - NOT numerical data
+
+# start off by dividing men and women
+rows_Women <- filter(annette_initaldata, Gender == "F")
+rows_Men <- filter(annette_initaldata, Gender == "M")
+
+# obstacle: idk how to do this so i am just going to start off at least making bar plots for each group - ignoring gender at the moment - to do list is: filter out rows of soft in initial data set, make new data frame
+rows_soft <- annette_initaldata[c(3,5,6,7,9,10,17,18),]
+
+count_soft_VDS <- sum(rows_soft$`Q7-impact-1` == "Very dissatisfied", na.rm = TRUE)
+count_soft_SDS <- sum(rows_soft$`Q7-impact-1` == "Somewhat dissatisfied", na.rm = TRUE)
+count_soft_N <- sum(rows_soft$`Q7-impact-1` == "Neither satisfied nor dissatisfied", na.rm = TRUE)
+count_soft_SS <- sum(rows_soft$`Q7-impact-1` == "Somewhat satisfied", na.rm = TRUE)
+count_soft_VS <- sum(rows_soft$`Q7-impact-1` == "Very satisfied", na.rm = TRUE)
+
+Count_soft <- c(count_soft_VDS, count_soft_SDS, count_soft_N, count_soft_SS, count_soft_VS)
+Satisfaction_level <- c("Very\ndissatisfied", "Somewhat\ndissatisfied", "Neither satisfied\nnor dissatisfied", "Somewhat\nsatisfied", "Very\nsatisfied")
+
+# make data frame for soft landing bar plot for satisfaction levels
+bar_satisfaction_soft_df <- data.frame(Count_soft, Satisfaction_level)
+bar_satisfaction_soft_df
+
+# make bar plot for different satisfaction levels for soft landing individuals
+bar_satisfaction_soft_plot <- ggplot(bar_satisfaction_soft_df, aes(x = Satisfaction_level, y = Count_soft)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "lightgreen") + 
+  labs(title = "Satisfaction Levels of Life for Soft-landing Individuals", x = "Satisfaction level", y = "Count of individuals") + theme(plot.title = element_text(hjust = 0.5))
+bar_satisfaction_soft_plot
+
+```
+```{r}
+# repeat process for downward-mobility individuals
+rows_down <- annette_initaldata[-c(1,3,5,6,7,9,10,17,18),]
+
+count_down_VDS <- sum(rows_down$`Q7-impact-1` == "Very dissatisfied", na.rm = TRUE)
+count_down_SDS <- sum(rows_down$`Q7-impact-1` == "Somewhat dissatisfied", na.rm = TRUE)
+count_down_N <- sum(rows_down$`Q7-impact-1` == "Neither satisfied nor dissatisfied", na.rm = TRUE)
+count_down_SS <- sum(rows_down$`Q7-impact-1` == "Somewhat satisfied", na.rm = TRUE)
+count_down_VS <- sum(rows_down$`Q7-impact-1` == "Very satisfied", na.rm = TRUE)
+
+Count_down <- c(count_down_VDS, count_down_SDS, count_down_N, count_down_SS, count_down_VS)
+
+bar_satisfaction_down_df <- data.frame(Count_down, Satisfaction_level)
+bar_satisfaction_down_df
+
+
+bar_satisfaction_down_plot <- ggplot(bar_satisfaction_down_df, aes(x = Satisfaction_level, y = Count_down)) +
+  geom_bar(stat = "identity", width = 0.5, fill = "gold") + 
+  labs(title = "Satisfaction Levels of Life for Downwardly-Mobile Individuals", x = "Satisfaction level", y = "Count of individuals") + theme(plot.title = element_text(hjust = 0.5))
+bar_satisfaction_down_plot
+
+# side-by-side for comparison
+sidebyside_bars <- bar_satisfaction_soft_plot + bar_satisfaction_down_plot
+sidebyside_bars
+```
+
+```{r}
+# do it for men vs women (in general, no comparison of soft vs down)
+count_women_VDS <- sum(rows_Women$`Q7-impact-1` == "Very dissatisfied", na.rm = TRUE)
+count_women_SDS <- sum(rows_Women$`Q7-impact-1` == "Somewhat dissatisfied", na.rm = TRUE)
+count_women_N <- sum(rows_Women$`Q7-impact-1` == "Neither satisfied nor dissatisfied", na.rm = TRUE)
+count_women_SS <- sum(rows_Women$`Q7-impact-1` == "Somewhat satisfied", na.rm = TRUE)
+count_women_VS <- sum(rows_Women$`Q7-impact-1` == "Very satisfied", na.rm = TRUE)
+
+Count_women <- c(count_women_VDS, count_women_SDS, count_women_N, count_women_SS, count_women_VS)
+
+count_men_VDS <- sum(rows_Men$`Q7-impact-1` == "Very dissatisfied", na.rm = TRUE)
+count_men_SDS <- sum(rows_Men$`Q7-impact-1` == "Somewhat dissatisfied", na.rm = TRUE)
+count_men_N <- sum(rows_Men$`Q7-impact-1` == "Neither satisfied nor dissatisfied", na.rm = TRUE)
+count_men_SS <- sum(rows_Men$`Q7-impact-1` == "Somewhat satisfied", na.rm = TRUE)
+count_men_VS <- sum(rows_Men$`Q7-impact-1` == "Very satisfied", na.rm = TRUE)
+
+Count_men <- c(count_men_VDS, count_men_SDS, count_men_N, count_men_SS, count_men_VS)
+
+
+# make dataframe - women
+bar_satisfaction_women_df <- data.frame(Count_women, Satisfaction_level)
+bar_satisfaction_women_df
+
+# make bar chart - women
+bar_satisfaction_women_plot <- ggplot(bar_satisfaction_women_df, aes(x = Satisfaction_level, y = Count_women)) + geom_bar(stat ="identity", width = 0.5, fill = "lightcoral") + 
+  labs(title = "Satisfaction Levels of Life for Women", x = "Satisfaction level", y = "Count of individuals") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+bar_satisfaction_women_plot
+
+
+# make dataframe - men
+bar_satisfaction_men_df <- data.frame(Count_men, Satisfaction_level)
+bar_satisfaction_men_df
+
+# make bar chart - men
+bar_satisfaction_men_plot <- ggplot(bar_satisfaction_men_df, aes(x = Satisfaction_level, y = Count_men)) + geom_bar(stat ="identity", width = 0.5, fill = "lightblue") + 
+  labs(title = "Satisfaction Levels of Life for Men", x = "Satisfaction level", y = "Count of individuals") + theme(plot.title = element_text(hjust = 0.5)) 
+bar_satisfaction_men_plot
+
+
+# side-by-side plot
+sidebyside_menwomen_bars <- bar_satisfaction_women_plot + bar_satisfaction_men_plot
+sidebyside_menwomen_bars
+
+```
+
