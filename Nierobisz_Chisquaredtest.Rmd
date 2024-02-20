@@ -1,0 +1,38 @@
+```{r}
+# chi-squared test 
+# Null hypothesis: There is no association between soft/down-ward group type and satisfaction level
+# Alternative hypothesis: There is an association
+chi_squared_data <- read.csv("chi_sqr_test_data.csv")
+Expectedvalue_SoftSatisfied <- (8*14)/21
+Expectedvalue_HardSatisfied <- (13*14)/21
+Expectedvalue_SoftDissatisfied <- (8*7)/21
+Expectedvalue_HardDissatisfied <- (13*7)/21
+
+
+Expectedvalue_SoftSatisfied
+Expectedvalue_HardSatisfied
+Expectedvalue_SoftDissatisfied
+Expectedvalue_HardDissatisfied
+
+# find (Observed-Expected)^2/Expected for each 
+OE_SoftSatisfied <- (7 - Expectedvalue_SoftSatisfied)^2/Expectedvalue_SoftSatisfied
+OE_HardSatisfied <- (7 - Expectedvalue_HardSatisfied)^2/Expectedvalue_HardSatisfied
+OE_SoftDissatisfied <- (1 - Expectedvalue_SoftDissatisfied)^2/Expectedvalue_SoftDissatisfied
+OE_HardDissatisfied <- (6 - Expectedvalue_HardDissatisfied)^2/Expectedvalue_HardDissatisfied
+
+OE_SoftSatisfied
+OE_HardSatisfied
+OE_SoftDissatisfied
+OE_HardDissatisfied
+
+# sum up to find Chi-squared test statistic
+Chi_squared_test_stat <- OE_SoftSatisfied + OE_HardSatisfied + OE_SoftDissatisfied + OE_HardDissatisfied
+Chi_squared_test_stat
+
+# determine degrees of freedom = (rownumber - 1)*(columnumber - 1)
+df <- (2-1)*(2-1)
+df
+
+# critical statistic at df = 1 is 3.841, higher than obtained test statistic of 2.524 - cannot reject null hypothesis
+```
+
