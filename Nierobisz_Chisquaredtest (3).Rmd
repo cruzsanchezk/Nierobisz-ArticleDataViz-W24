@@ -1,0 +1,144 @@
+```{r}
+# chi-squared test 
+# Null hypothesis: There is no association between soft/down-ward group type and satisfaction level
+# Alternative hypothesis: There is an association
+chi_squared_data <- read.csv("chi_sqr_test_data.csv")
+Expectedvalue_SoftSatisfied <- (8*14)/21
+Expectedvalue_HardSatisfied <- (13*14)/21
+Expectedvalue_SoftDissatisfied <- (8*7)/21
+Expectedvalue_HardDissatisfied <- (13*7)/21
+
+
+Expectedvalue_SoftSatisfied
+Expectedvalue_HardSatisfied
+Expectedvalue_SoftDissatisfied
+Expectedvalue_HardDissatisfied
+
+# find (Observed-Expected)^2/Expected for each 
+OE_SoftSatisfied <- (7 - Expectedvalue_SoftSatisfied)^2/Expectedvalue_SoftSatisfied
+OE_HardSatisfied <- (7 - Expectedvalue_HardSatisfied)^2/Expectedvalue_HardSatisfied
+OE_SoftDissatisfied <- (1 - Expectedvalue_SoftDissatisfied)^2/Expectedvalue_SoftDissatisfied
+OE_HardDissatisfied <- (6 - Expectedvalue_HardDissatisfied)^2/Expectedvalue_HardDissatisfied
+
+OE_SoftSatisfied
+OE_HardSatisfied
+OE_SoftDissatisfied
+OE_HardDissatisfied
+
+# sum up to find Chi-squared test statistic
+Chi_squared_test_stat <- OE_SoftSatisfied + OE_HardSatisfied + OE_SoftDissatisfied + OE_HardDissatisfied
+Chi_squared_test_stat
+
+# determine degrees of freedom = (rownumber - 1)*(columnumber - 1)
+df <- (2-1)*(2-1)
+df
+
+# critical statistic at df = 1 and alpha level of 0.05 is 3.841, higher than obtained test statistic of 2.524 - cannot reject null hypothesis
+```
+
+
+```{r}
+# another chi-squared test that groups neither into satisfaction 
+
+# messed up the satisfaction level data - reimport
+new_annettedata <- read.csv("cleaned_data.csv")
+
+# get rid of "6" indicating response "other" for question regarding current satisfaction levels of life
+column_of_focus <- new_annettedata$`Q7.impact.1`
+row_of_focus <- grep("6", column_of_focus)
+
+# using gsub(), replaces the string we don't want with "" in specified rows - assisted by CHATGPT
+column_of_focus[row_of_focus] <- gsub("6", "", column_of_focus[row_of_focus])
+
+new_annettedata$`Q7.impact.1`<- column_of_focus
+
+# giving satisfaction levels string labels
+
+new_annettedata$Q7.impact.1 <- ifelse(new_annettedata$Q7.impact.1 == "1", "Very satisfied", 
+                                      ifelse(new_annettedata$Q7.impact.1 == "2", "Somewhat satisfied",
+                                             ifelse(new_annettedata$Q7.impact.1 == "3", "Neither",
+                                                    ifelse(new_annettedata$Q7.impact.1 == "4", "Somewhat dissatisfied",
+                                                           ifelse(new_annettedata$Q7.impact.1 == "5", "Very dissatisifed", 0)))))
+
+new_annettedata$type <- ifelse(new_annettedata$type == "Down", "Soft", "Down")
+
+
+new_annettedata$Q6.employed <- ifelse(new_annettedata$Q6.employed == "1", "Retired", "Employed")
+
+count_Verysatisfied <- sum(new_annettedata$`Q7.impact.1` == "Very satisfied" & new_annettedata$type == "Soft", na.rm = TRUE)
+
+count_Somewhatsatisfied <- sum(new_annettedata$`Q7.impact.1` == "Somewhat satisfied" & new_annettedata$type == "Soft", na.rm = TRUE)
+count_Neither <- sum(new_annettedata$`Q7.impact.1` == "Neither" & new_annettedata$type == "Soft", na.rm = TRUE)
+
+count_satisfied <- count_Verysatisfied + count_Somewhatsatisfied + count_Neither
+count_satisfied
+
+# repeat for down group
+
+count_VS <- sum(new_annettedata$`Q7.impact.1` == "Very satisfied" & new_annettedata$type == "Down", na.rm = TRUE)
+
+count_SS <- sum(new_annettedata$`Q7.impact.1` == "Somewhat satisfied" & new_annettedata$type == "Down", na.rm = TRUE)
+count_N <- sum(new_annettedata$`Q7.impact.1` == "Neither" & new_annettedata$type == "Down", na.rm = TRUE)
+
+count_S <- count_VS + count_SS + count_N
+count_S
+
+# now for dissatisfied - just combining very and somewhat - start with soft group
+count_Verydissatisfied <- sum(new_annettedata$`Q7.impact.1` == "Very dissatisfied" & new_annettedata$type == "Soft", na.rm = TRUE)
+count_Verydissatisfied
+
+count_Somewhatdissatisfied <- sum(new_annettedata$`Q7.impact.1` == "Somewhat dissatisfied" & new_annettedata$type == "Soft", na.rm = TRUE)
+count_Somewhatdissatisfied
+
+count_dissatisfied <- count_Verydissatisfied + count_Somewhatdissatisfied
+count_dissatisfied
+
+# same for down group
+
+count_VDS <- sum(new_annettedata$`Q7.impact.1` == "Very dissatisifed" & new_annettedata$type == "Down", na.rm = TRUE)
+count_VDS
+
+count_SDS <- sum(new_annettedata$`Q7.impact.1` == "Somewhat dissatisfied" & new_annettedata$type == "Down", na.rm = TRUE)
+count_SDS
+
+count_DS <- count_VDS + count_SDS
+count_DS
+
+# make data frame for chi-squared test
+chi_squared_neitherwithsatisfaction <- data.frame(Satisfied = c(count_satisfied, count_S), Dissatisfied = c(count_dissatisfied, count_DS))
+
+# Null hypothesis: There is no association between soft/down-ward group type and satisfaction level
+# Alternative hypothesis: There is an association
+EV_SoftSatisfied <- (18*8)/25
+EV_HardSatisfied <- (18*17)/25
+EV_SoftDissatisfied <- (7*8)/25
+EV_HardDissatisfied <- (18*17)/25
+
+
+EV_SoftSatisfied
+EV_HardSatisfied
+EV_SoftDissatisfied
+EV_HardDissatisfied
+
+# find (Observed-Expected)^2/Expected for each 
+OE_SoftS <- (7 - EV_SoftSatisfied)^2/EV_SoftSatisfied
+OE_HardS <- (11 - EV_HardSatisfied)^2/EV_HardSatisfied
+OE_SoftDS <- (1 - EV_SoftDissatisfied)^2/EV_SoftDissatisfied
+OE_HardDS <- (6 - EV_HardDissatisfied)^2/EV_HardDissatisfied
+
+OE_SoftS
+OE_HardS
+OE_SoftDS
+OE_HardDS
+
+# sum up to find Chi-squared test statistic
+Chi_test_stat <- OE_SoftS + OE_HardS + OE_SoftDS + OE_HardDS
+Chi_test_stat
+
+# determine degrees of freedom = (rownumber - 1)*(columnumber - 1)
+df <- (2-1)*(2-1)
+df
+
+# critical statistic at df = 1 is 3.841, lower than obtained test statistic of 4.26017 - can reject null hypothesis
+```
+
